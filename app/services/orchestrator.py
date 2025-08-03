@@ -12,9 +12,10 @@ def save_exchange_rate(rates: dict):
         fecha_valor = format_date_valor(fecha_valor_str)
             
         for currency, price in rates.items():
-            last_record = get_last_record(currency)          
+            last_record = get_last_record(currency)
+            print(f"Guardando tasa para {currency}: {last_record.price} con fecha {fecha_valor}")          
             Monitor.create(
-                type='bcv',
+                currency=currency,
                 change=price - last_record.price if last_record else 0.0,  # Puedes calcularlo si tienes datos anteriores
                 color=set_color(last_record.price, price),
                 image='https://res.cloudinary.com/bcv/image.png',
@@ -24,7 +25,7 @@ def save_exchange_rate(rates: dict):
                 price=float(price),
                 price_old=last_record.price if last_record else 0.0,  # Temporal, hasta que calcules diferencia
                 symbol=set_symbol(last_record.price, price),
-                title=currency
+                title='BCV'
             )
 
         print("✅ Tasas guardadas en la base de datos.")
@@ -50,7 +51,7 @@ def set_color(present_price, new_price):
 def get_last_record(currency):
     try:
         db.connect(reuse_if_open=True)
-        last_record = Monitor.select().where(Monitor.title == currency).order_by(Monitor.created_at.desc()).get()
+        last_record = Monitor.select().where(Monitor.currency == currency).order_by(Monitor.created_at.desc()).get()
         return last_record
     except Monitor.DoesNotExist:
         last_record = Monitor(price=0.0, last_update=datetime.datetime.now().strftime('%Y-%m-%d %H:%M'))

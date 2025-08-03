@@ -3,7 +3,7 @@ import datetime
 from config.database import db
 
 class Monitor(Model):
-    type = CharField()                  # Ej: 'bcv', 'enparalelovzla'
+    currency = CharField()                  # Ej: 'bcv', 'enparalelovzla'
     change = FloatField()
     color = CharField()
     image = CharField()
