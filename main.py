@@ -10,7 +10,7 @@ def main():
         print(f"🔍 Datos extraídos: {rates}")
         try:
             save_exchange_rate(rates)
-            print("Tasas guardadas correctamente.")
+            print("Tasas procesadas correctamente.")
         except Exception as e:
             print(f"❌ Error detallado: {e}")
             import traceback

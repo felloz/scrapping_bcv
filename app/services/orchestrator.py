@@ -1,6 +1,7 @@
 from config.database import db
 from app.models.monitor import Monitor
 import datetime
+from app.utils.date_utils import parse_custom_date, format_date_to_custom, get_current_date_custom
 
 def save_exchange_rate(rates: dict):
     try:
@@ -14,21 +15,9 @@ def save_exchange_rate(rates: dict):
         for currency, price in rates.items():
             last_record = get_last_record(currency)
             print(f"Guardando tasa para {currency}: {last_record.price} con fecha {fecha_valor}")          
-            Monitor.create(
-                currency=currency,
-                change=price - last_record.price if last_record else 0.0,  # Puedes calcularlo si tienes datos anteriores
-                color=set_color(last_record.price, price),
-                image='https://res.cloudinary.com/bcv/image.png',
-                last_update=fecha_valor,
-                last_update_old=last_record.last_update if last_record else datetime.datetime.now().strftime('%Y-%m-%d %H:%M'),
-                percent=percent_change(price, last_record.price == 0.0),
-                price=float(price),
-                price_old=last_record.price if last_record else 0.0,  # Temporal, hasta que calcules diferencia
-                symbol=set_symbol(last_record.price, price),
-                title='BCV'
-            )
+            store_exchange_rate(fecha_valor, last_record.last_update, currency, price, last_record.price)
 
-        print("✅ Tasas guardadas en la base de datos.")
+        print("✅ Tasas procesadas y validadas en la base de datos.")
 
     except Exception as e:
         print(f"❌ Error al guardar tasas: {e}")
@@ -36,6 +25,31 @@ def save_exchange_rate(rates: dict):
     finally:
         if not db.is_closed():
             db.close()
+
+
+
+def store_exchange_rate(scrapping_date, last_update_date_db, currency, price, price_db):
+    if (scrapping_date is None or last_update_date_db is None):
+        print("⚠️ No se pudo guardar la tasa, fechas inválidas")
+        return None
+    if scrapping_date != last_update_date_db:
+        Monitor.create(
+                    currency=currency,
+                    change=price - price_db if price_db else 0.0,
+                    color=set_color(price_db, price),
+                    image='https://res.cloudinary.com/bcv/image.png',
+                    last_update=scrapping_date,
+                    last_update_old=last_update_date_db if last_update_date_db else parse_custom_date(get_current_date_custom()),
+                    percent=percent_change(price, price_db),
+                    price=float(price),
+                    price_old=price_db if price_db else 0.0,
+                    symbol=set_symbol(price_db, price),
+                    title='BCV'
+                )
+        print(f"✅ Tasa guardada para {currency}: {price} con fecha {scrapping_date}")
+    else:
+        print(f"⚠️ No se guardó la tasa para {currency}, fecha de scrapping {scrapping_date} no es mayor que la última actualización {last_update_date_db}")
+        return None
 
 
 def set_color(present_price, new_price):
@@ -54,7 +68,9 @@ def get_last_record(currency):
         last_record = Monitor.select().where(Monitor.currency == currency).order_by(Monitor.created_at.desc()).get()
         return last_record
     except Monitor.DoesNotExist:
-        last_record = Monitor(price=0.0, last_update=datetime.datetime.now().strftime('%Y-%m-%d %H:%M'))
+        # Crear un registro temporal con formato personalizado
+        temp_date = get_current_date_custom()
+        last_record = Monitor(price=0.0, last_update=parse_custom_date(temp_date))
         return last_record
 
 def percent_change(new_price, old_price):
@@ -77,30 +93,17 @@ def set_symbol(present_price, new_price):
         return '▼'
 
 def format_date_valor(fecha_valor_str):
+    """Convierte fecha_valor_str al formato personalizado y luego a datetime"""
     if fecha_valor_str:
-            try:
-                # Limpiar la cadena de fecha
-                fecha_limpia = fecha_valor_str.strip()
-                print(f"Parseando fecha: '{fecha_limpia}'")
-                
-                # Intentar diferentes formatos
-                formatos = ['%Y-%m-%d %H:%M', '%Y-%m-%d']
-                fecha_valor = None
-                
-                for formato in formatos:
-                    try:
-                        fecha_valor = datetime.datetime.strptime(fecha_limpia, formato)
-                        print(f"Usando fecha del BCV: {fecha_valor}")
-                        return fecha_valor
-                    except ValueError:
-                        continue
-                        
-                if not fecha_valor:
-                    print(f"Error parseando fecha {fecha_valor_str}, usando fecha actual")
-                    return datetime.datetime.now()
-                    
-            except Exception as e:
-                print(f"Error general parseando fecha: {e}")
-                return datetime.datetime.now()
+        try:
+            print(f"Parseando fecha: '{fecha_valor_str}'")
+            # Usar utilidades para parsear la fecha
+            fecha_dt = parse_custom_date(fecha_valor_str)
+            print(f"Usando fecha del BCV: {format_date_to_custom(fecha_dt)}")
+            return fecha_dt
+        except Exception as e:
+            print(f"Error parseando fecha: {e}")
+            return datetime.datetime.now()
     else:
         return datetime.datetime.now()
+    

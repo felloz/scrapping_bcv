@@ -4,6 +4,7 @@ import warnings
 import re
 from urllib3.exceptions import InsecureRequestWarning
 import datetime
+from app.utils.date_utils import parse_bcv_date, get_current_date_custom
 
 # Suppress SSL warnings
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
@@ -44,50 +45,13 @@ class BcvScraper:
                     print(f"📅 Fecha encontrada: {fecha_str}")
                     break
             
-            # Procesar la fecha encontrada
+            # Procesar la fecha encontrada usando utilidades
             if fecha_str:
-                try:
-                    # Mapeo de meses en español a números
-                    meses_spanish = {
-                        'enero': '01', 'febrero': '02', 'marzo': '03', 'abril': '04',
-                        'mayo': '05', 'junio': '06', 'julio': '07', 'agosto': '08',
-                        'septiembre': '09', 'octubre': '10', 'noviembre': '11', 'diciembre': '12'
-                    }
-                    
-                    # Limpiar la fecha (remover día de la semana y comas)
-                    fecha_limpia = re.sub(r'^[A-Za-z]+,\s*', '', fecha_str)  # Remover "Lunes, "
-                    
-                    # Extraer día, mes y año usando regex
-                    match = re.match(r'([0-9]{1,2})\s+([A-Za-z]+)\s+([0-9]{4})', fecha_limpia)
-                    
-                    if match:
-                        dia = match.group(1).zfill(2)  # Añadir cero si es necesario
-                        mes_texto = match.group(2).lower()
-                        anio = match.group(3)
-                        
-                        # Convertir mes de texto a número
-                        mes_num = meses_spanish.get(mes_texto)
-                        
-                        if mes_num:
-                            fecha_valor = f"{anio}-{mes_num}-{dia} 12:00"
-                            print(f"✅ Fecha parseada correctamente: {fecha_valor}")
-                        else:
-                            print(f"⚠️ Mes no reconocido: {mes_texto}")
-                            fecha_valor = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-                    else:
-                        print(f"⚠️ Formato de fecha no reconocido: {fecha_limpia}")
-                        fecha_valor = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-                            
-                    if not fecha_valor:
-                        print(f"⚠️ No se pudo parsear la fecha {fecha_str}, usando fecha actual")
-                        fecha_valor = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-                        
-                except Exception as e:
-                    print(f"⚠️ Error procesando fecha: {e}")
-                    fecha_valor = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+                fecha_valor = parse_bcv_date(fecha_str)
+                print(f"✅ Fecha parseada: {fecha_valor}")
             else:
                 print("⚠️ No se encontró fecha valor, usando fecha actual")
-                fecha_valor = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+                fecha_valor = get_current_date_custom()
             
             if not usd_match or not eur_match:
                 print("Could not find exchange rates on the page.")
