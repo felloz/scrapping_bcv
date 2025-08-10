@@ -1,10 +1,20 @@
 from app.scraping.bcv_scraper import BcvScraper
+from app.services.binance_service import save_binance_rate
 from app.services.orchestrator import save_exchange_rate
+from app.binance.ves_usdt import VesUsdt
+
 
 def main():
+    # Obtener precios de Binance P2P
+    print("🔄 Obteniendo precios de Binance P2P...")
+    binance = VesUsdt()
+    binance_price = binance.get_binance_p2p_price('BUY')
+    print(f"💰 Precio de Binance P2P: {binance_price}")
+    save_binance_rate(binance_price)
+
+    #Scrapping BCV for exchange rates
     scraper = BcvScraper()
     rates = scraper.get_exchange_rates()
-
     # Puedes agregar validación o logging aquí si lo deseas
     if rates:
         print(f"🔍 Datos extraídos: {rates}")

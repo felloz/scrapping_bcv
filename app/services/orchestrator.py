@@ -13,7 +13,7 @@ def save_exchange_rate(rates: dict):
         fecha_valor = format_date_valor(fecha_valor_str)
             
         for currency, price in rates.items():
-            last_record = get_last_record(currency)
+            last_record = get_last_record(currency, 'BCV')
             print(f"Guardando tasa para {currency}: {last_record.price} con fecha {fecha_valor}")          
             store_exchange_rate(fecha_valor, last_record.last_update, currency, price, last_record.price)
 
@@ -62,10 +62,10 @@ def set_color(present_price, new_price):
     else:
         return 'gray'
 
-def get_last_record(currency):
+def get_last_record(currency, title):
     try:
         db.connect(reuse_if_open=True)
-        last_record = Monitor.select().where(Monitor.currency == currency).order_by(Monitor.created_at.desc()).get()
+        last_record = Monitor.select().where(Monitor.currency == currency).where(Monitor.title==title).order_by(Monitor.created_at.desc()).get()
         return last_record
     except Monitor.DoesNotExist:
         # Crear un registro temporal con formato personalizado
@@ -106,4 +106,5 @@ def format_date_valor(fecha_valor_str):
             return datetime.datetime.now()
     else:
         return datetime.datetime.now()
+    
     
