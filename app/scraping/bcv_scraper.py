@@ -32,10 +32,6 @@ class BcvScraper:
             fecha_valor_pattern = r"Fecha Valor[:\s]*(.*\d{4})"
             fecha_valor_match = re.search(fecha_valor_pattern, content, re.IGNORECASE)
             
-            # Debug: mostrar contexto alrededor de "Fecha Valor"
-            debug_match = re.search(r"Fecha Valor[:\s]*[^\n]*", content, re.IGNORECASE)
-            if debug_match:
-                print(f"🔍 Debug - Texto 'Fecha Valor' encontrado: '{debug_match.group(0)}'")
             
             fecha_valor = None
             fecha_str = None

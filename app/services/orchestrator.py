@@ -14,7 +14,7 @@ def save_exchange_rate(rates: dict):
             
         for currency, price in rates.items():
             last_record = get_last_record(currency, 'BCV')
-            print(f"Guardando tasa para {currency}: {last_record.price} con fecha {fecha_valor}")          
+            print(f"Guardando tasa para {currency}: {price} con fecha {fecha_valor}")          
             store_exchange_rate(fecha_valor, last_record.last_update, currency, price, last_record.price)
 
         print("✅ Tasas procesadas y validadas en la base de datos.")
@@ -29,24 +29,30 @@ def save_exchange_rate(rates: dict):
 
 
 def store_exchange_rate(scrapping_date, last_update_date_db, currency, price, price_db):
-    if (scrapping_date is None or last_update_date_db is None):
-        print("⚠️ No se pudo guardar la tasa, fechas inválidas")
+    if scrapping_date is None:
+        print("⚠️ No se pudo guardar la tasa, fecha de scrapping inválida")
         return None
-    if scrapping_date != last_update_date_db:
+    
+    # Si no hay registros previos (last_update_date_db es None), siempre guardar
+    # Si hay registros, solo guardar si la fecha de scrapping es mayor
+    should_save = (last_update_date_db is None) or (scrapping_date > last_update_date_db)
+    
+    if should_save:
         Monitor.create(
                     currency=currency,
                     change=price - price_db if price_db else 0.0,
                     color=set_color(price_db, price),
                     image='https://res.cloudinary.com/bcv/image.png',
                     last_update=scrapping_date,
-                    last_update_old=last_update_date_db if last_update_date_db else parse_custom_date(get_current_date_custom()),
+                    last_update_old=last_update_date_db if last_update_date_db else scrapping_date,
                     percent=percent_change(price, price_db),
                     price=float(price),
                     price_old=price_db if price_db else 0.0,
                     symbol=set_symbol(price_db, price),
                     title='BCV'
                 )
-        print(f"✅ Tasa guardada para {currency}: {price} con fecha {scrapping_date}")
+        status_msg = "primera vez" if last_update_date_db is None else f"fecha más reciente ({scrapping_date} > {last_update_date_db})"
+        print(f"✅ Tasa guardada para {currency}: {price} con fecha {scrapping_date} - {status_msg}")
     else:
         print(f"⚠️ No se guardó la tasa para {currency}, fecha de scrapping {scrapping_date} no es mayor que la última actualización {last_update_date_db}")
         return None
@@ -68,9 +74,10 @@ def get_last_record(currency, title):
         last_record = Monitor.select().where(Monitor.currency == currency).where(Monitor.title==title).order_by(Monitor.created_at.desc()).get()
         return last_record
     except Monitor.DoesNotExist:
-        # Crear un registro temporal con formato personalizado
-        temp_date = get_current_date_custom()
-        last_record = Monitor(price=0.0, last_update=parse_custom_date(temp_date))
+        # Crear un registro temporal que indica que no hay datos previos
+        # last_update=None indica que es la primera vez que se guarda esta moneda
+        last_record = Monitor(price=0.0, last_update=None)
+        print(f"ℹ️ No hay registros previos para {currency} en {title}")
         return last_record
 
 def percent_change(new_price, old_price):

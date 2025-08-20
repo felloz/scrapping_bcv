@@ -10,13 +10,19 @@ def save_binance_rate(price):
         db.connect(reuse_if_open=True)
         # Extraer fecha_valor del diccionario      
         last_record = get_last_record('VES_USDT', 'Binance P2P')
-        if last_record != None:
+        
+        # Si no hay registros previos (last_update es None), crear nuevo registro
+        if last_record.last_update is None:
+            store_binance_data(price, last_record.price, last_record.last_update)
+            print("✅ Tasa de Binance P2P guardada en la base de datos.")
+        else:
+            # Si hay registros, comparar por fecha
             if last_record.last_update.date() != datetime.now().date():
                 store_binance_data(price, last_record.price, last_record.last_update)
                 print("✅ Tasa de Binance P2P guardada en la base de datos.")
-            if last_record.last_update.date() == datetime.now().date():
+            elif last_record.last_update.date() == datetime.now().date():
                 update_binance_rate(price, last_record)
-                print("✅ Tasa de Binance P2P actualizada en la base de datos.")    
+                print("✅ Tasa de Binance P2P actualizada en la base de datos.")
     except Exception as e:
         print(f"❌ Error al guardar tasa de Binance P2P: {e}")
     finally:
