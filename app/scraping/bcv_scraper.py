@@ -27,23 +27,35 @@ class BcvScraper:
             usd_match = re.search(r"USD\s*([0-9.,]+)", content)
             eur_match = re.search(r"EUR\s*([0-9.,]+)", content)
             
-            # Buscar fecha valor con patrón específico del BCV
-            date_patterns = [
-                r"Fecha Valor[:\s]*([A-Za-z]+,\s*[0-9]{1,2}\s+[A-Za-z]+\s+[0-9]{4})",
-                r"Fecha Valor[:\s]*([0-9]{1,2}\s+[A-Za-z]+\s+[0-9]{4})",
-                r"Fecha Valor[:\s]*([0-9]{1,2}/[0-9]{1,2}/[0-9]{4})",
-                r"([A-Za-z]+,\s*[0-9]{1,2}\s+[A-Za-z]+\s+[0-9]{4})"
-            ]
+            # Buscar fecha valor específicamente del BCV
+            # Usar un patrón más flexible que capture todo hasta el año
+            fecha_valor_pattern = r"Fecha Valor[:\s]*(.*\d{4})"
+            fecha_valor_match = re.search(fecha_valor_pattern, content, re.IGNORECASE)
+            
+            # Debug: mostrar contexto alrededor de "Fecha Valor"
+            debug_match = re.search(r"Fecha Valor[:\s]*[^\n]*", content, re.IGNORECASE)
+            if debug_match:
+                print(f"🔍 Debug - Texto 'Fecha Valor' encontrado: '{debug_match.group(0)}'")
             
             fecha_valor = None
             fecha_str = None
             
-            for pattern in date_patterns:
-                date_match = re.search(pattern, content, re.IGNORECASE)
-                if date_match:
-                    fecha_str = date_match.group(1)
-                    print(f"📅 Fecha encontrada: {fecha_str}")
-                    break
+            if fecha_valor_match:
+                fecha_str = fecha_valor_match.group(1)
+                print(f"📅 Fecha Valor encontrada: {fecha_str}")
+            else:
+                # Fallback: buscar otros patrones solo si no se encuentra "Fecha Valor"
+                fallback_patterns = [
+                    r"Fecha Valor[:\s]*([0-9]{1,2}\s+[A-Za-z]+\s+[0-9]{4})",
+                    r"Fecha Valor[:\s]*([0-9]{1,2}/[0-9]{1,2}/[0-9]{4})"
+                ]
+                
+                for pattern in fallback_patterns:
+                    date_match = re.search(pattern, content, re.IGNORECASE)
+                    if date_match:
+                        fecha_str = date_match.group(1)
+                        print(f"📅 Fecha encontrada (fallback): {fecha_str}")
+                        break
             
             # Procesar la fecha encontrada usando utilidades
             if fecha_str:

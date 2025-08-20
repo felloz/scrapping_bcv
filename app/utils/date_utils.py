@@ -54,8 +54,9 @@ def parse_bcv_date(fecha_str):
     }
     
     try:
-        # Limpiar la fecha (remover día de la semana y comas)
+        # Limpiar la fecha (remover día de la semana y comas, normalizar espacios)
         fecha_limpia = re.sub(r'^[A-Za-z]+,\s*', '', fecha_str)  # Remover "Lunes, "
+        fecha_limpia = re.sub(r'\s+', ' ', fecha_limpia).strip()  # Normalizar espacios múltiples
         
         # Extraer día, mes y año usando regex
         match = re.match(r'([0-9]{1,2})\s+([A-Za-z]+)\s+([0-9]{4})', fecha_limpia)
