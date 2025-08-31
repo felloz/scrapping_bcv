@@ -3,6 +3,9 @@ from app.models.monitor import Monitor
 import datetime
 from app.utils.date_utils import parse_custom_date, format_date_to_custom, get_current_date_custom
 
+
+currency_type = 1
+
 def save_exchange_rate(rates: dict):
     try:
         db.connect(reuse_if_open=True)
@@ -15,7 +18,7 @@ def save_exchange_rate(rates: dict):
         for currency, price in rates.items():
             last_record = get_last_record(currency, 'BCV')
             print(f"Guardando tasa para {currency}: {price} con fecha {fecha_valor}")          
-            store_exchange_rate(fecha_valor, last_record.last_update, currency, price, last_record.price)
+            store_exchange_rate(fecha_valor, last_record.last_update, currency, price, last_record.price, currency_type)
 
         print("✅ Tasas procesadas y validadas en la base de datos.")
 
@@ -28,7 +31,7 @@ def save_exchange_rate(rates: dict):
 
 
 
-def store_exchange_rate(scrapping_date, last_update_date_db, currency, price, price_db):
+def store_exchange_rate(scrapping_date, last_update_date_db, currency, price, price_db, currency_type=1):
     if scrapping_date is None:
         print("⚠️ No se pudo guardar la tasa, fecha de scrapping inválida")
         return None
@@ -49,6 +52,7 @@ def store_exchange_rate(scrapping_date, last_update_date_db, currency, price, pr
                     price=float(price),
                     price_old=price_db if price_db else 0.0,
                     symbol=set_symbol(price_db, price),
+                    currency_type=currency_type,
                     title='BCV'
                 )
         status_msg = "primera vez" if last_update_date_db is None else f"fecha más reciente ({scrapping_date} > {last_update_date_db})"

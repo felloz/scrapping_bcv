@@ -13,6 +13,7 @@ class Monitor(Model):
     price = FloatField()
     price_old = FloatField()
     symbol = CharField()
+    currency_type = IntegerField()  # 1 para fiat, 2 para cripto
     title = CharField()
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)

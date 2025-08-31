@@ -1,16 +1,47 @@
 from app.scraping.bcv_scraper import BcvScraper
-from app.services.binance_service import save_binance_rate
+from app.services.criptos.cripto_service import CriptoService
+from app.services.criptos.usdt_service import save_binance_rate
 from app.services.orchestrator import save_exchange_rate
-from app.binance.ves_usdt import VesUsdt
+from app.binance.criptos import Criptos
+from config.logger import Logger
 
 
 def main():
     # Obtener precios de Binance P2P
+    log = Logger()
+    logger = log.get_logger("bcv_scrapping")
+
     print("🔄 Obteniendo precios de Binance P2P...")
-    binance = VesUsdt()
-    binance_price = binance.get_binance_p2p_price('BUY')
-    print(f"💰 Precio de Binance P2P: {binance_price}")
-    save_binance_rate(binance_price)
+    cripto = Criptos()
+    #Consultamos precio de USDT y XRP
+    usdt_price = cripto.get_binance_p2p_price('BUY', 'USDT', 'VES')
+    xrp_price = cripto.get_binance_p2p_price('BUY', 'XRP', 'VES')
+    logger.info(f"Precio USDT: {usdt_price}, Precio XRP: {xrp_price}")
+    # print(f"💰 Precio de USDT VES: {usdt_price}")
+    # print(f"💰 Precio de XRP VES: {xrp_price}")
+
+    # Guardar precio de USDT en la base de datos
+    try:
+        if usdt_price:    
+            save_binance_rate(usdt_price)
+            print("✅ Tasa de USDT procesada.")
+            logger.info("✅ Tasa de USDT procesada.")
+        elif usdt_price is None:
+            print("❌ No se pudo obtener la tasa de USDT.")
+        if xrp_price:
+            xrp = CriptoService()
+            xrp.create_cripto(xrp_price)
+            print("✅ Tasa de XRP procesada.")
+            logger.info("Tasa de XRP procesada.")
+        elif xrp_price is None:
+            print("❌ No se pudo obtener la tasa de XRP.")
+            logger.error("❌ No se pudo obtener la tasa de XRP.")
+    except Exception as e:
+        print(f"❌ Error al procesar la tasa de USDT: {e}")
+        logger.error(f"Error al procesar la tasa de USDT: {e}")
+    except Exception as e:
+        print(f"❌ Error al procesar la tasa de XRP: {e}")
+        logger.error(f"Error al procesar la tasa de XRP: {e}")
 
     #Scrapping BCV for exchange rates
     scraper = BcvScraper()
@@ -21,12 +52,15 @@ def main():
         try:
             save_exchange_rate(rates)
             print("Tasas procesadas correctamente.")
+            logger.info("Tasas procesadas correctamente.")
         except Exception as e:
             print(f"❌ Error detallado: {e}")
+            logger.error(f"Error al guardar tasas: {e}")
             import traceback
             traceback.print_exc()
     else:
         print("No se pudieron obtener tasas.")
+        logger.error(f"No se pudieron obtener tasas: {e}")
 
 if __name__ == "__main__":
     main()

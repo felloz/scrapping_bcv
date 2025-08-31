@@ -1,0 +1,9 @@
+2025-08-23 09:22:28,128 - ERROR - save_binance_rate:29 - ❌ Error al guardar tasa de Binance P2P: connection to server at "192.168.180.128", port 5432 failed: Connection timed out (0x0000274C/10060)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-08-23 09:39:46,067 - ERROR - save_binance_rate:29 - ❌ Error al guardar tasa de Binance P2P: connection to server at "192.168.180.128", port 5432 failed: Connection timed out (0x0000274C/10060)
+	Is the server running on that host and accepting TCP/IP connections?
+
+2025-08-23 21:41:31,515 - ERROR - save_binance_rate:29 - ❌ Error al guardar tasa de Binance P2P: get_last_record() takes 1 positional argument but 2 were given
+2025-08-24 09:52:41,490 - ERROR - save_binance_rate:30 - ❌ Error al guardar tasa de Binance P2P: store_binance_data() missing 1 required positional argument: 'currency_type'
+2025-08-24 09:53:38,931 - ERROR - save_binance_rate:30 - ❌ Error al guardar tasa de Binance P2P: update_binance_rate() missing 1 required positional argument: 'currency_type'

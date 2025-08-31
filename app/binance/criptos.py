@@ -3,9 +3,9 @@ import requests
 
 from app.models.monitor import Monitor
 
-class VesUsdt:
+class Criptos:
     
-    def get_binance_p2p_price(self, trade_type):
+    def get_binance_p2p_price(self, trade_type, asset, fiat):
         """
         Realiza una solicitud a la API de Binance P2P y retorna el precio.
         'trade_type' puede ser 'BUY' o 'SELL'.
@@ -16,8 +16,8 @@ class VesUsdt:
                 'Content-Type': 'application/json'
             }
             payload = {
-                "asset": "USDT",
-                "fiat": "VES",
+                "asset": asset,
+                "fiat": fiat,
                 "tradeType": trade_type,
                 "page": 1,
                 "rows": 1
