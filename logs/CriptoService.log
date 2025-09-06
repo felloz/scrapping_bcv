@@ -11,3 +11,5 @@
 2025-08-24 09:54:05,198 - INFO - create_cripto:41 - ✅ Tasa actualizada correctamente: XRP Ledger
 2025-08-31 11:06:16,017 - INFO - save_cripto:67 - ✅ Tasa guardada para VES_USDT: 584.032 con fecha 2025-08-31 11:06:16.017223
 2025-08-31 11:06:16,017 - INFO - create_cripto:37 - ✅ Tasa guardada correctamente: XRP Ledger
+2025-09-01 19:56:18,595 - INFO - save_cripto:67 - ✅ Tasa guardada para VES_USDT: 582.645 con fecha 2025-09-01 19:56:18.595590
+2025-09-01 19:56:18,596 - INFO - create_cripto:37 - ✅ Tasa guardada correctamente: XRP Ledger
