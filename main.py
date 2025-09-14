@@ -3,6 +3,7 @@ from app.services.criptos.cripto_service import CriptoService
 from app.services.criptos.usdt_service import save_binance_rate
 from app.services.orchestrator import save_exchange_rate
 from app.binance.criptos import Criptos
+from app.utils.helpers import php_get_rates
 from config.logger import Logger
 import subprocess
 from dotenv import load_dotenv
@@ -61,21 +62,7 @@ def main():
             save_exchange_rate(rates)
             print("Tasas procesadas correctamente.")
             logger.info("Tasas procesadas correctamente.")
-            execution = subprocess.run(
-                command,
-                cwd=os.getenv("PHP_PROJECT_PATH"),              # Cambia el directorio de trabajo
-                capture_output=True,         # Captura salida y errores
-                text=True,                   # Devuelve strings en lugar de bytes
-                check=True                   # Lanza excepción si el comando falla
-            )
-            if execution.stderr:
-                logger.error(f"❌ Error en servidor PHP Lumen: {execution.stderr}")
-                print("Servidor PHP Lumen:")
-                print(f"❌ {execution.stderr}")
-            else:
-                logger.info(f"✅ Respuesta del servidor PHP Lumen: {execution.stdout}")
-                print("Servidor PHP Lumen:")
-                print(f"✅ {execution.stdout}")
+            php_get_rates(logger)
                 
         except Exception as e:
             print(f"❌ Error detallado: {e}")
