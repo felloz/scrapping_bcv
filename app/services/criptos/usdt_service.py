@@ -15,12 +15,12 @@ def save_binance_rate(price):
         
         # Si no hay registros previos (last_update es None), crear nuevo registro
         if last_record.last_update is None:
-            store_binance_data(price, last_record.price, last_record.last_update, currency_type, last_record.change)
+            store_binance_data(price, currency_type, last_record)
             print("✅ Tasa de Binance P2P guardada en la base de datos.")
         else:
             # Si hay registros, comparar por fecha
             if last_record.last_update.date() != datetime.now().date():
-                store_binance_data(price, last_record.price, last_record.last_update, currency_type, last_record.change)
+                store_binance_data(price, currency_type, last_record)
                 print("✅ Tasa de Binance P2P guardada en la base de datos.")
             elif last_record.last_update.date() == datetime.now().date():
                 update_binance_rate(price, last_record, currency_type)
@@ -33,19 +33,19 @@ def save_binance_rate(price):
             db.close()
 
 
-def store_binance_data(price, price_db, last_update_date_db, currency_type, change_db):
+def store_binance_data(price, currency_type, data_db: Monitor):
     try:
         Monitor.create(
             currency='VES_USDT',
-            change=change(price, price_db, change_db),
-            color=set_color(price_db, price),
+            change=change(price, data_db.price, data_db.change),
+            color=set_color(data_db.price, price, data_db.color),
             image='https://www.svgrepo.com/show/331309/binance.svg',
             last_update=datetime.now(),
-            last_update_old=last_update_date_db if last_update_date_db else parse_custom_date(get_current_date_custom()),
-            percent=percent_change(price, price_db),
+            last_update_old=data_db.last_update if data_db.last_update else parse_custom_date(get_current_date_custom()),
+            percent=percent_change(price, data_db.price, data_db.percent),
             price=float(price),
-            price_old=price_db if price_db else 0.0,
-            symbol=set_symbol(price_db, price),
+            price_old=data_db.price if data_db.price else 0.0,
+            symbol=set_symbol(data_db.price, price, data_db.symbol),
             currency_type= currency_type,
             title='Binance P2P'
         )
@@ -60,14 +60,14 @@ def update_binance_rate(price, data_db: Monitor, currency_type):
     try:
         Monitor.update(
             change=change(price, data_db.price, data_db.change),
-            color=set_color(data_db.price, price),
+            color=set_color(data_db.price, price, data_db.color),
             last_update=datetime.now(),
             last_update_old=data_db.last_update if data_db.last_update else parse_custom_date(get_current_date_custom()),
-            percent=percent_change(price, data_db.price),
+            percent=percent_change(price, data_db.price, data_db.percent),
             price=float(price),
             price_old=data_db.price if data_db.price else 0.0,
             currency_type= currency_type,
-            symbol=set_symbol(data_db.price, price),
+            symbol=set_symbol(data_db.price, price, data_db.symbol),
         ).where(
             (Monitor.currency == 'VES_USDT') & (Monitor.title == 'Binance P2P')
         

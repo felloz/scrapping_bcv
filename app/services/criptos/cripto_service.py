@@ -1,6 +1,6 @@
 from datetime import datetime
 from app.models.monitor import Monitor
-from app.services.orchestrator import get_last_record, percent_change, set_color, set_symbol
+from app.services.orchestrator import get_last_record, percent_change, set_color, set_symbol, change
 from app.utils.date_utils import get_current_date_custom, parse_custom_date
 from config.database import db
 from config.logger import Logger
@@ -27,12 +27,12 @@ class CriptoService:
             
             # Si no hay registros previos (last_update es None), crear nuevo registro
             if last_record.last_update is None:
-                self.save_cripto(price, last_record.price, last_record.last_update, self.currency, self.title, self.currency_type)
+                self.save_cripto(price, last_record, self.currency, self.title, self.currency_type)
                 print(f"✅ Tasa de {self.title} guardada en la base de datos.")
             else:
                 # Si hay registros, comparar por fecha
                 if last_record.last_update.date() != datetime.now().date():
-                    self.save_cripto(price, last_record.price, last_record.last_update, self.currency, self.title, self.currency_type)
+                    self.save_cripto(price, last_record.price, last_record.last_update, self.currency, self.title, self.currency_type, last_record.change, last_record.symbol, last_record.color)
                     print("✅ Tasa de Binance P2P guardada en la base de datos.")
                     self.logger.info(f"✅ Tasa guardada correctamente: {self.title}")
                 elif last_record.last_update.date() == datetime.now().date():
@@ -47,20 +47,20 @@ class CriptoService:
             if not db.is_closed():
                 db.close()
 
-    def save_cripto(self, price, price_db, last_update_date_db, currency, title, currency_type):
+    def save_cripto(self, price, data_db: Monitor, currency, title, currency_type):
         try:
             Monitor.create(
                 currency=currency,
-                change=price - price_db if price_db else 0.0,
-                color=set_color(price_db, price),
+                change=change(price, data_db.price, data_db.change),
+                color=set_color(data_db.price, price, data_db.color),
                 image='https://www.svgrepo.com/show/331309/binance.svg',
                 last_update=datetime.now(),
-                last_update_old=last_update_date_db if last_update_date_db else parse_custom_date(get_current_date_custom()),
-                percent=percent_change(price, price_db),
+                last_update_old=data_db.last_update if data_db.last_update else parse_custom_date(get_current_date_custom()),
+                percent=percent_change(price, data_db.price, data_db.percent),
                 price=float(price),
                 currency_type=currency_type,
-                price_old=price_db if price_db else 0.0,
-                symbol=set_symbol(price_db, price),
+                price_old=data_db.price if data_db.price else 0.0,
+                symbol=set_symbol(data_db.price, price, data_db.symbol),
                 title=title
             )
             print(f"✅ Tasa guardada para VES_USDT: {price} con fecha {datetime.now()}")
@@ -74,14 +74,14 @@ class CriptoService:
 
         try:
             Monitor.update(
-            change=price - data_db.price if data_db.price else 0.0,
-            color=set_color(data_db.price, price),
+            change=change(price, data_db.price, data_db.change),
+            color=set_color(data_db.price, price, data_db.color),
             last_update=datetime.now(),
             last_update_old=data_db.last_update if data_db.last_update else parse_custom_date(get_current_date_custom()),
-            percent=percent_change(price, data_db.price),
+            percent=percent_change(price, data_db.price, data_db.percent),
             price=float(price),
             price_old=data_db.price if data_db.price else 0.0,
-            symbol=set_symbol(data_db.price, price),
+            symbol=set_symbol(data_db.price, price, data_db.symbol),
             ).where(
                 (Monitor.currency == self.currency) & (Monitor.title == self.title)
             

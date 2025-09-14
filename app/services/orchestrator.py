@@ -32,7 +32,7 @@ def save_exchange_rate(rates: dict):
 
 
 
-def store_exchange_rate(scrapping_date, last_record, currency, price, price_db, currency_type=1):
+def store_exchange_rate(scrapping_date, last_record: Monitor, currency, price, price_db, currency_type=1):
     if scrapping_date is None:
         print("⚠️ No se pudo guardar la tasa, fecha de scrapping inválida")
         return None
@@ -46,14 +46,14 @@ def store_exchange_rate(scrapping_date, last_record, currency, price, price_db, 
         Monitor.create(
                     currency=currency,
                     change=change(price, price_db, last_record.change),
-                    color=set_color(price_db, price),
+                    color=set_color(price_db, price, last_record.color),
                     image='https://res.cloudinary.com/bcv/image.png',
                     last_update=scrapping_date,
                     last_update_old=last_record.last_update if last_record.last_update else scrapping_date,
-                    percent=percent_change(price, price_db),
+                    percent=percent_change(price, price_db, last_record.percent),
                     price=float(price),
                     price_old=price_db if price_db else 0.0,
-                    symbol=set_symbol(price_db, price),
+                    symbol=set_symbol(price_db, price, last_record.symbol),
                     currency_type=currency_type,
                     title='BCV'
                 )
@@ -64,13 +64,13 @@ def store_exchange_rate(scrapping_date, last_record, currency, price, price_db, 
         return None
 
 
-def set_color(present_price, new_price):
+def set_color(present_price, new_price, color_db):
     if present_price > new_price:
         return 'red'
     if present_price < new_price:
         return 'green'
     if present_price == new_price:
-        return 'gray'
+        return color_db if color_db else 'gray'
     else:
         return 'gray'
 
@@ -86,20 +86,20 @@ def get_last_record(currency, title):
         print(f"ℹ️ No hay registros previos para {currency} en {title}")
         return last_record
 
-def percent_change(new_price, old_price):
+def percent_change(new_price, old_price, percent_db):
     if ((old_price is None or old_price is None) or old_price == 0):
         return 0.0  # Evita división por cero
     if new_price is None or new_price == 0:
         return 0.0
     if old_price == new_price:
-        return 0.0
+        return percent_db
     return ((new_price - old_price) / old_price) * 100
 
-def set_symbol(present_price, new_price):
+def set_symbol(present_price, new_price, symbol_db):
     if present_price is None or new_price is None:
         return '='
     if present_price == new_price:
-        return '='
+        return symbol_db if symbol_db else '='
     if new_price > present_price:
         return '▲'
     elif new_price < present_price:
