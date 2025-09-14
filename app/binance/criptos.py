@@ -15,22 +15,39 @@ class Criptos:
             headers = {
                 'Content-Type': 'application/json'
             }
+            
             payload = {
-                "asset": asset,
-                "fiat": fiat,
-                "tradeType": trade_type,
-                "page": 1,
-                "rows": 1
+                 "fiat": fiat,
+                 "page": 1,
+                 "rows": 5,
+                 "tradeType": trade_type,
+                 "asset": asset,
+                 "countries": [],
+                 "proMerchantAds": False,
+                 "shieldMerchantAds": False,
+                 "filterType": "all",
+                 "periods": [],
+                 "additionalKycVerifyFilter": 0,
+                 "ignoreProMerchantAds": True,
+                 "publisherType": "merchant",
+                 "payTypes": [],
+                 "classifies": ["mass", "profession", "fiat_trade"],
+                 "tradedWith": False,
+                 "followed": False
             }
             response = requests.post(url, json=payload, headers=headers)
             response.raise_for_status()
             data = response.json()
             if data['code'] == '000000' and data['data']:
-                db = Monitor()
+                #db = Monitor()
                 # Asumiendo que 'data' contiene una lista de anuncios y tomamos el primero
                 # Puedes ajustar esto según tus necesidades
-                price = data['data'][0]['adv']['price']
-                return float(price)
+                for ad in data["data"]:
+                    if ad.get("privilegeType") == 8:  # Es un anuncio promocionado
+                        continue
+                    print("Precio mínimo sin promoted:", ad["adv"]["price"])    
+                    price = ad["adv"]["price"]
+                    return float(price)
             else:
                 print(f"Error en la respuesta de Binance P2P: {data.get('msg', 'No data')}")
                 return None

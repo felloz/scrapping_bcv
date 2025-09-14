@@ -10,7 +10,6 @@ def main():
     # Obtener precios de Binance P2P
     log = Logger()
     logger = log.get_logger("bcv_scrapping")
-
     print("🔄 Obteniendo precios de Binance P2P...")
     cripto = Criptos()
     #Consultamos precio de USDT y XRP

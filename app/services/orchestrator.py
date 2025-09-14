@@ -5,6 +5,7 @@ from app.utils.date_utils import parse_custom_date, format_date_to_custom, get_c
 
 
 currency_type = 1
+current_date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 def save_exchange_rate(rates: dict):
     try:
@@ -18,7 +19,7 @@ def save_exchange_rate(rates: dict):
         for currency, price in rates.items():
             last_record = get_last_record(currency, 'BCV')
             print(f"Guardando tasa para {currency}: {price} con fecha {fecha_valor}")          
-            store_exchange_rate(fecha_valor, last_record.last_update, currency, price, last_record.price, currency_type)
+            store_exchange_rate(fecha_valor, last_record, currency, price, last_record.price, currency_type)
 
         print("✅ Tasas procesadas y validadas en la base de datos.")
 
@@ -31,23 +32,24 @@ def save_exchange_rate(rates: dict):
 
 
 
-def store_exchange_rate(scrapping_date, last_update_date_db, currency, price, price_db, currency_type=1):
+def store_exchange_rate(scrapping_date, last_record, currency, price, price_db, currency_type=1):
     if scrapping_date is None:
         print("⚠️ No se pudo guardar la tasa, fecha de scrapping inválida")
         return None
-    
+    scrapping_date_str = scrapping_date.strftime('%Y-%m-%d %H:%M:%S')
+    last_update_date_db_str = last_record.last_update.strftime('%Y-%m-%d %H:%M:%S') if last_record.last_update else 'None'
     # Si no hay registros previos (last_update_date_db es None), siempre guardar
     # Si hay registros, solo guardar si la fecha de scrapping es mayor
-    should_save = (last_update_date_db is None) or (scrapping_date > last_update_date_db)
-    
+    should_save = (last_record.last_update is None) or (scrapping_date_str > last_update_date_db_str and scrapping_date_str <= current_date)
+    print(f"Comparando fechas para {currency}: scrapping_date {scrapping_date_str} vs last_update_date_db {last_update_date_db_str} AND Server Date: {current_date} => should_save: {should_save}")
     if should_save:
         Monitor.create(
                     currency=currency,
-                    change=price - price_db if price_db else 0.0,
+                    change=change(price, price_db, last_record.change),
                     color=set_color(price_db, price),
                     image='https://res.cloudinary.com/bcv/image.png',
                     last_update=scrapping_date,
-                    last_update_old=last_update_date_db if last_update_date_db else scrapping_date,
+                    last_update_old=last_record.last_update if last_record.last_update else scrapping_date,
                     percent=percent_change(price, price_db),
                     price=float(price),
                     price_old=price_db if price_db else 0.0,
@@ -55,10 +57,10 @@ def store_exchange_rate(scrapping_date, last_update_date_db, currency, price, pr
                     currency_type=currency_type,
                     title='BCV'
                 )
-        status_msg = "primera vez" if last_update_date_db is None else f"fecha más reciente ({scrapping_date} > {last_update_date_db})"
+        status_msg = "primera vez" if last_record.last_update is None else f"fecha más reciente ({scrapping_date} > {last_record.last_update})"
         print(f"✅ Tasa guardada para {currency}: {price} con fecha {scrapping_date} - {status_msg}")
     else:
-        print(f"⚠️ No se guardó la tasa para {currency}, fecha de scrapping {scrapping_date} no es mayor que la última actualización {last_update_date_db}")
+        print(f"⚠️ No se guardó la tasa para {currency}, fecha de scrapping {scrapping_date} no es mayor que la última actualización {last_record.last_update}")
         return None
 
 
@@ -119,3 +121,13 @@ def format_date_valor(fecha_valor_str):
         return datetime.datetime.now()
     
     
+def change(price, price_db, change_db):
+    print(f"Calculando cambio para price: {price}, price_db: {price_db}")
+    if price_db is None or price is None:
+        print("⚠️ Precio o precio en DB es None, retornando cambio 0.0")
+        return 0.0
+    if price - price_db == 0.0000:
+        print(f"⚠️ Cambio negativo o cero: {price - price_db}, retornando cambio 0.0")
+        return change_db
+    print(f"✅ Cambio positivo: {price - price_db}")    
+    return price - price_db
