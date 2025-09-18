@@ -30,7 +30,6 @@ def save_exchange_rate(rates: dict):
         if not db.is_closed():
             db.close()
 
-
 def store_exchange_rate(scrapping_date, last_record: Monitor, currency, price, price_db, currency_type=1):
     if scrapping_date is None:
         print("⚠️ No se pudo guardar la tasa, fecha de scrapping inválida")
@@ -39,23 +38,24 @@ def store_exchange_rate(scrapping_date, last_record: Monitor, currency, price, p
     scrapping_date_str = scrapping_date.strftime('%Y-%m-%d %H:%M:%S')
     last_update_date_db_str = last_record.last_update.strftime('%Y-%m-%d %H:%M:%S') if last_record.last_update else 'None'
 
-    # Conversión para comparación
     current_date = datetime.now()
     last_update_dt = last_record.last_update if last_record.last_update else None
 
     should_save = (
         last_update_dt is None
     ) or (
-        scrapping_date > last_update_dt and (
-            # Caso 1: tasa del día actual
-            scrapping_date.date() == current_date.date()
-            # Caso 2: tasa del día siguiente y ya pasó la hora de publicación
-            or (
-                scrapping_date.date() == (current_date.date() + timedelta(days=1))
-                and current_date.time() >= scrapping_date.time()
+            scrapping_date > last_update_dt
+            and (
+                # Día actual y ya pasó la hora de publicación
+                (scrapping_date.date() == current_date.date() and current_date >= scrapping_date)
+                # Día siguiente y ya pasó la hora de publicación
+                or (
+                    scrapping_date.date() == (current_date.date() + timedelta(days=1))
+                    and current_date >= scrapping_date
+                )
             )
-        )
     )
+
 
     print(f"Comparando fechas para {currency}: scrapping_date {scrapping_date_str} vs last_update_date_db {last_update_date_db_str} AND Server Date: {current_date} => should_save: {should_save}")
 
@@ -79,6 +79,7 @@ def store_exchange_rate(scrapping_date, last_record: Monitor, currency, price, p
     else:
         print(f"⚠️ No se guardó la tasa para {currency}, fecha de scrapping {scrapping_date} no cumple las condiciones")
         return None
+
 
 
 def set_color(present_price, new_price, color_db):
