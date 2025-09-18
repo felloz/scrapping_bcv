@@ -1,17 +1,17 @@
 from config.database import db
 from app.models.monitor import Monitor
-import datetime
+from datetime import datetime, timedelta
 from app.utils.date_utils import parse_custom_date, format_date_to_custom, get_current_date_custom
 
 
 currency_type = 1
-current_date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+current_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 def save_exchange_rate(rates: dict):
     try:
         db.connect(reuse_if_open=True)
         # Extraer fecha_valor del diccionario
-        fecha_valor_str = rates.pop('fecha_valor', datetime.datetime.now().strftime('%Y-%m-%d %H:%M'))
+        fecha_valor_str = rates.pop('fecha_valor', datetime.now().strftime('%Y-%m-%d %H:%M'))
         
         # Convertir fecha_valor a objeto datetime
         fecha_valor = format_date_valor(fecha_valor_str)
@@ -31,36 +31,53 @@ def save_exchange_rate(rates: dict):
             db.close()
 
 
-
 def store_exchange_rate(scrapping_date, last_record: Monitor, currency, price, price_db, currency_type=1):
     if scrapping_date is None:
         print("⚠️ No se pudo guardar la tasa, fecha de scrapping inválida")
         return None
+
     scrapping_date_str = scrapping_date.strftime('%Y-%m-%d %H:%M:%S')
     last_update_date_db_str = last_record.last_update.strftime('%Y-%m-%d %H:%M:%S') if last_record.last_update else 'None'
-    # Si no hay registros previos (last_update_date_db es None), siempre guardar
-    # Si hay registros, solo guardar si la fecha de scrapping es mayor
-    should_save = (last_record.last_update is None) or (scrapping_date_str > last_update_date_db_str and scrapping_date_str <= current_date)
+
+    # Conversión para comparación
+    current_date = datetime.now()
+    last_update_dt = last_record.last_update if last_record.last_update else None
+
+    should_save = (
+        last_update_dt is None
+    ) or (
+        scrapping_date > last_update_dt and (
+            # Caso 1: tasa del día actual
+            scrapping_date.date() == current_date.date()
+            # Caso 2: tasa del día siguiente y ya pasó la hora de publicación
+            or (
+                scrapping_date.date() == (current_date.date() + timedelta(days=1))
+                and current_date.time() >= scrapping_date.time()
+            )
+        )
+    )
+
     print(f"Comparando fechas para {currency}: scrapping_date {scrapping_date_str} vs last_update_date_db {last_update_date_db_str} AND Server Date: {current_date} => should_save: {should_save}")
+
     if should_save:
         Monitor.create(
-                    currency=currency,
-                    change=change(price, price_db, last_record.change),
-                    color=set_color(price_db, price, last_record.color),
-                    image='https://res.cloudinary.com/bcv/image.png',
-                    last_update=scrapping_date,
-                    last_update_old=last_record.last_update if last_record.last_update else scrapping_date,
-                    percent=percent_change(price, price_db, last_record.percent),
-                    price=float(price),
-                    price_old=price_db if price_db else 0.0,
-                    symbol=set_symbol(price_db, price, last_record.symbol),
-                    currency_type=currency_type,
-                    title='BCV'
-                )
+            currency=currency,
+            change=change(price, price_db, last_record.change),
+            color=set_color(price_db, price, last_record.color),
+            image='https://res.cloudinary.com/bcv/image.png',
+            last_update=scrapping_date,
+            last_update_old=last_record.last_update if last_record.last_update else scrapping_date,
+            percent=percent_change(price, price_db, last_record.percent),
+            price=float(price),
+            price_old=price_db if price_db else 0.0,
+            symbol=set_symbol(price_db, price, last_record.symbol),
+            currency_type=currency_type,
+            title='BCV'
+        )
         status_msg = "primera vez" if last_record.last_update is None else f"fecha más reciente ({scrapping_date} > {last_record.last_update})"
         print(f"✅ Tasa guardada para {currency}: {price} con fecha {scrapping_date} - {status_msg}")
     else:
-        print(f"⚠️ No se guardó la tasa para {currency}, fecha de scrapping {scrapping_date} no es mayor que la última actualización {last_record.last_update}")
+        print(f"⚠️ No se guardó la tasa para {currency}, fecha de scrapping {scrapping_date} no cumple las condiciones")
         return None
 
 

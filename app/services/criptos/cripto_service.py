@@ -32,7 +32,7 @@ class CriptoService:
             else:
                 # Si hay registros, comparar por fecha
                 if last_record.last_update.date() != datetime.now().date():
-                    self.save_cripto(price, last_record.price, last_record.last_update, self.currency, self.title, self.currency_type, last_record.change, last_record.symbol, last_record.color)
+                    self.save_cripto(price, last_record, self.currency, self.title, self.currency_type)
                     print("✅ Tasa de Binance P2P guardada en la base de datos.")
                     self.logger.info(f"✅ Tasa guardada correctamente: {self.title}")
                 elif last_record.last_update.date() == datetime.now().date():
