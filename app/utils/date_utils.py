@@ -71,7 +71,7 @@ def parse_bcv_date(fecha_str):
             
             if mes_num:
                 # Crear objeto datetime y convertir al formato personalizado
-                fecha_dt = datetime.datetime(int(anio), int(mes_num), int(dia), 12, 0)
+                fecha_dt = datetime.datetime(int(anio), int(mes_num), int(dia), 0, 0)
                 return format_date_to_custom(fecha_dt)
         
         return get_current_date_custom()
