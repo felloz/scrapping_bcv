@@ -19,20 +19,20 @@ class CriptoService:
     def get_all_criptos(self):
         return self.cript_repository.find_all()
 
-    def create_cripto(self, price):
+    def create_cripto(self, price, transaction_type):
         try:
             db.connect(reuse_if_open=True)
             # Extraer fecha_valor del diccionario      
-            last_record = get_last_record(self.currency, self.title)
+            last_record = get_last_record(self.currency, self.title, transaction_type)
             
             # Si no hay registros previos (last_update es None), crear nuevo registro
             if last_record.last_update is None:
-                self.save_cripto(price, last_record, self.currency, self.title, self.currency_type)
+                self.save_cripto(price, last_record, self.currency, self.title, self.currency_type, transaction_type)
                 print(f"✅ Tasa de {self.title} guardada en la base de datos.")
             else:
                 # Si hay registros, comparar por fecha
                 if last_record.last_update.date() != datetime.now().date():
-                    self.save_cripto(price, last_record, self.currency, self.title, self.currency_type)
+                    self.save_cripto(price, last_record, self.currency, self.title, self.currency_type, transaction_type)
                     print("✅ Tasa de Binance P2P guardada en la base de datos.")
                     self.logger.info(f"✅ Tasa guardada correctamente: {self.title}")
                 elif last_record.last_update.date() == datetime.now().date():
@@ -47,13 +47,14 @@ class CriptoService:
             if not db.is_closed():
                 db.close()
 
-    def save_cripto(self, price, data_db: Monitor, currency, title, currency_type):
+    def save_cripto(self, price, data_db: Monitor, currency, title, currency_type, transaction_type):
         try:
             Monitor.create(
                 currency=currency,
                 change=change(price, data_db.price, data_db.change),
                 color=set_color(data_db.price, price, data_db.color),
                 image='https://www.svgrepo.com/show/331309/binance.svg',
+                transaction_type=transaction_type,
                 last_update=datetime.now(),
                 last_update_old=data_db.last_update if data_db.last_update else parse_custom_date(get_current_date_custom()),
                 percent=percent_change(price, data_db.price, data_db.percent),

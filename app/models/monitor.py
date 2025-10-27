@@ -7,6 +7,7 @@ class Monitor(Model):
     change = FloatField()
     color = CharField()
     image = CharField()
+    transaction_type = CharField()  # 1 para compra, 2 para venta
     last_update = DateTimeField()
     last_update_old = DateTimeField()          # Si luego decides usar DateTime, puedes cambiarlo
     percent = FloatField()

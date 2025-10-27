@@ -7,7 +7,7 @@ from app.utils.date_utils import parse_custom_date, format_date_to_custom, get_c
 currency_type = 1
 current_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-def save_exchange_rate(rates: dict):
+def save_exchange_rate(rates: dict, transaction_type):
     try:
         db.connect(reuse_if_open=True)
         # Extraer fecha_valor del diccionario
@@ -17,7 +17,7 @@ def save_exchange_rate(rates: dict):
         fecha_valor = format_date_valor(fecha_valor_str)
             
         for currency, price in rates.items():
-            last_record = get_last_record(currency, 'BCV')
+            last_record = get_last_record(currency, 'BCV', transaction_type)
             print(f"Guardando tasa para {currency}: {price} con fecha {fecha_valor}")          
             store_exchange_rate(fecha_valor, last_record, currency, price, last_record.price, currency_type)
 
@@ -65,6 +65,7 @@ def store_exchange_rate(scrapping_date, last_record: Monitor, currency, price, p
             change=change(price, price_db, last_record.change),
             color=set_color(price_db, price, last_record.color),
             image='https://res.cloudinary.com/bcv/image.png',
+            transaction_type='NA',
             last_update=scrapping_date,
             last_update_old=last_record.last_update if last_record.last_update else scrapping_date,
             percent=percent_change(price, price_db, last_record.percent),
@@ -92,10 +93,10 @@ def set_color(present_price, new_price, color_db):
     else:
         return 'gray'
 
-def get_last_record(currency, title):
+def get_last_record(currency, title, transaction_type):
     try:
         db.connect(reuse_if_open=True)
-        last_record = Monitor.select().where(Monitor.currency == currency).where(Monitor.title==title).order_by(Monitor.created_at.desc()).get()
+        last_record = Monitor.select().where(Monitor.currency == currency).where(Monitor.title==title).where(Monitor.transaction_type==transaction_type).order_by(Monitor.created_at.desc()).get()
         return last_record
     except Monitor.DoesNotExist:
         # Crear un registro temporal que indica que no hay datos previos

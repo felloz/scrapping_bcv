@@ -23,28 +23,46 @@ def main():
     print("🔄 Obteniendo precios de Binance P2P...")
     cripto = Criptos()
     #Consultamos precio de USDT y XRP
-    usdt_price = cripto.get_binance_p2p_price('BUY', 'USDT', 'VES')
-    xrp_price = cripto.get_binance_p2p_price('BUY', 'XRP', 'VES')
-    logger.info(f"Precio USDT: {usdt_price}, Precio XRP: {xrp_price}")
+    usdt_price_buy = cripto.get_binance_p2p_price('BUY', 'USDT', 'VES')
+    usdt_price_sell = cripto.get_binance_p2p_price('SELL', 'USDT', 'VES')
+    xrp_price_buy = cripto.get_binance_p2p_price('BUY', 'XRP', 'VES')
+    xrp_price_sell = cripto.get_binance_p2p_price('SELL', 'XRP', 'VES')
+    logger.info(f"Precio USDT(compra): {usdt_price_buy}, Precio XRP(compra): {xrp_price_buy}")
+    logger.info(f"Precio USDT(venta): {usdt_price_sell}, Precio XRP(venta): {xrp_price_sell}")
+    
     # print(f"💰 Precio de USDT VES: {usdt_price}")
     # print(f"💰 Precio de XRP VES: {xrp_price}")
 
     # Guardar precio de USDT en la base de datos
     try:
-        if usdt_price:    
-            save_binance_rate(usdt_price)
-            print("✅ Tasa de USDT procesada.")
-            logger.info("✅ Tasa de USDT procesada.")
-        elif usdt_price is None:
+        if usdt_price_buy:    
+            save_binance_rate(usdt_price_buy, 'BUY')
+            print("✅ Tasa de USDT(compra) procesada.")
+            logger.info("✅ Tasa de USDT(compra) procesada.")
+        elif usdt_price_buy is None:
             print("❌ No se pudo obtener la tasa de USDT.")
-        if xrp_price:
+        if usdt_price_sell:    
+            save_binance_rate(usdt_price_sell, 'SELL')
+            print("✅ Tasa de USDT(venta) procesada.")
+            logger.info("✅ Tasa de USDT(venta) procesada.")
+        elif usdt_price_buy is None:
+            print("❌ No se pudo obtener la tasa de USDT.")
+        if xrp_price_buy:
             xrp = CriptoService()
-            xrp.create_cripto(xrp_price)
-            print("✅ Tasa de XRP procesada.")
+            xrp.create_cripto(xrp_price_buy, 'BUY')
+            print("✅ Tasa de XRP(compra) procesada.")
             logger.info("Tasa de XRP procesada.")
-        elif xrp_price is None:
-            print("❌ No se pudo obtener la tasa de XRP.")
-            logger.error("❌ No se pudo obtener la tasa de XRP.")
+        if xrp_price_sell:
+            xrp = CriptoService()
+            xrp.create_cripto(xrp_price_sell, 'SELL')
+            print("✅ Tasa de XRP(venta) procesada.")
+            logger.info("Tasa de XRP procesada.")
+        elif xrp_price_buy is None:
+            print("❌ No se pudo obtener la tasa de XRP(compra).")
+            logger.error("❌ No se pudo obtener la tasa de XRP(compra).")
+        elif xrp_price_sell is None:
+            print("❌ No se pudo obtener la tasa de XRP(venta).")
+            logger.error("❌ No se pudo obtener la tasa de XRP(venta).")
     except Exception as e:
         print(f"❌ Error al procesar la tasa de USDT: {e}")
         logger.error(f"Error al procesar la tasa de USDT: {e}")
@@ -59,7 +77,7 @@ def main():
     if rates:
         print(f"🔍 Datos extraídos: {rates}")
         try:
-            save_exchange_rate(rates)
+            save_exchange_rate(rates, 'NA')
             print("Tasas procesadas correctamente.")
             logger.info("Tasas procesadas correctamente.")
             php_get_rates(logger)
