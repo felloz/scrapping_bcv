@@ -27,8 +27,12 @@ def main():
     usdt_price_sell = cripto.get_binance_p2p_price('SELL', 'USDT', 'VES')
     xrp_price_buy = cripto.get_binance_p2p_price('BUY', 'XRP', 'VES')
     xrp_price_sell = cripto.get_binance_p2p_price('SELL', 'XRP', 'VES')
+    xrp_usd_price_buy = cripto.get_binance_p2p_price('BUY', 'XRP', 'USD')
+    xrp_usd_price_sell = cripto.get_binance_p2p_price('SELL', 'XRP', 'USD')
     logger.info(f"Precio USDT(compra): {usdt_price_buy}, Precio XRP(compra): {xrp_price_buy}")
     logger.info(f"Precio USDT(venta): {usdt_price_sell}, Precio XRP(venta): {xrp_price_sell}")
+    logger.info(f"Precio USDT(compra): {xrp_usd_price_buy}, Precio XRP(compra): {xrp_price_buy}")
+    logger.info(f"Precio USDT(venta): {xrp_usd_price_sell}, Precio XRP(venta): {xrp_price_sell}")
     
     # print(f"💰 Precio de USDT VES: {usdt_price}")
     # print(f"💰 Precio de XRP VES: {xrp_price}")
@@ -47,6 +51,27 @@ def main():
             logger.info("✅ Tasa de USDT(venta) procesada.")
         elif usdt_price_buy is None:
             print("❌ No se pudo obtener la tasa de USDT.")
+        if xrp_usd_price_buy:
+            xrp = CriptoService()
+            xrp.create_cripto(xrp_usd_price_buy, 'BUY', 'USD_XRP')
+            print("✅ Tasa de XRP(compra) procesada.")
+            logger.info("Tasa de XRP procesada.")
+        if xrp_usd_price_sell:
+            xrp = CriptoService()
+            xrp.create_cripto(xrp_usd_price_sell, 'SELL', 'USD_XRP')
+            print("✅ Tasa de XRP(venta) procesada.")
+            logger.info("Tasa de XRP procesada.")
+            xrp = CriptoService()
+            xrp.create_cripto(xrp_usd_price_sell, 'SELL')
+            print("✅ Tasa de XRP(venta) procesada.")
+            logger.info("Tasa de XRP procesada.")
+        elif xrp_price_buy is None:
+            print("❌ No se pudo obtener la tasa de XRP(compra).")
+            logger.error("❌ No se pudo obtener la tasa de XRP(compra).")
+        elif xrp_usd_price_sell is None:
+            print("❌ No se pudo obtener la tasa de XRP(venta).")
+            logger.error("❌ No se pudo obtener la tasa de XRP(venta).")
+            ##########################################################    
         if xrp_price_buy:
             xrp = CriptoService()
             xrp.create_cripto(xrp_price_buy, 'BUY')

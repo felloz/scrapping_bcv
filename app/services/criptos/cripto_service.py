@@ -6,8 +6,7 @@ from config.database import db
 from config.logger import Logger
 
 class CriptoService:
-
-    currency = 'VES_XRP'
+  
     title = 'XRP Ledger'
     currency_type = 2
     logger = Logger().get_logger("CriptoService")
@@ -19,20 +18,20 @@ class CriptoService:
     def get_all_criptos(self):
         return self.cript_repository.find_all()
 
-    def create_cripto(self, price, transaction_type):
+    def create_cripto(self, price, transaction_type, currency = "VES_XRP"):
         try:
             db.connect(reuse_if_open=True)
             # Extraer fecha_valor del diccionario      
-            last_record = get_last_record(self.currency, self.title, transaction_type)
+            last_record = get_last_record(currency, self.title, transaction_type)
             
             # Si no hay registros previos (last_update es None), crear nuevo registro
             if last_record.last_update is None:
-                self.save_cripto(price, last_record, self.currency, self.title, self.currency_type, transaction_type)
+                self.save_cripto(price, last_record, currency, self.title, self.currency_type, transaction_type)
                 print(f"✅ Tasa de {self.title} guardada en la base de datos.")
             else:
                 # Si hay registros, comparar por fecha
                 if last_record.last_update.date() != datetime.now().date():
-                    self.save_cripto(price, last_record, self.currency, self.title, self.currency_type, transaction_type)
+                    self.save_cripto(price, last_record, currency, self.title, self.currency_type, transaction_type)
                     print("✅ Tasa de Binance P2P guardada en la base de datos.")
                     self.logger.info(f"✅ Tasa guardada correctamente: {self.title}")
                 elif last_record.last_update.date() == datetime.now().date():
@@ -71,7 +70,7 @@ class CriptoService:
             self.logger.error(f"❌ Error al guardar tasa de Binance P2P: {e} save_cripto()")
             return None
 
-    def update_cripto(self, price, data_db: Monitor):
+    def update_cripto(self, price, data_db: Monitor, currency = "VES_XRP"):
 
         try:
             Monitor.update(
@@ -84,7 +83,7 @@ class CriptoService:
             price_old=data_db.price if data_db.price else 0.0,
             symbol=set_symbol(data_db.price, price, data_db.symbol),
             ).where(
-                (Monitor.currency == self.currency) & (Monitor.title == self.title)
+                (Monitor.currency == currency) & (Monitor.title == self.title)
             
             ).where(Monitor.id == data_db.id).execute()
             print(f"✅ Tasa actualizada para {self.title}: {price} con fecha {datetime.now()}")
