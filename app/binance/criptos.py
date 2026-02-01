@@ -54,3 +54,25 @@ class Criptos:
         except requests.exceptions.RequestException as e:
             print(f"Error al conectar con la API de Binance: {e}")
         return None
+    
+    def get_spot_price(self, currency):
+        """
+        Obtiene el precio del oro en la moneda especificada.
+        Para oro: PAXGUSDT
+        """
+        try:
+            url = f'https://api.binance.com/api/v3/ticker/price?symbol={currency}'
+            headers = {
+                'Content-Type': 'application/json'}
+            response = requests.get(url, headers=headers)
+            response.raise_for_status() 
+            data = response.json()
+            if 'price' in data:
+                price = data['price']
+                return float(price)
+            else:
+                print(f"Error en la respuesta de Binance Spot: {data.get('msg', 'No price found')}")
+                return None
+        except requests.exceptions.RequestException as e:
+            print(f"Error al conectar con la API de Binance Spot: {e}")
+               

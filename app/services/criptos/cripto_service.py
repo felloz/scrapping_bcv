@@ -18,22 +18,22 @@ class CriptoService:
     def get_all_criptos(self):
         return self.cript_repository.find_all()
 
-    def create_cripto(self, price, transaction_type, currency = "VES_XRP"):
+    def create_cripto(self, price, transaction_type, currency = "VES_XRP", title = 'XRP Ledger'):
         try:
             db.connect(reuse_if_open=True)
             # Extraer fecha_valor del diccionario      
-            last_record = get_last_record(currency, self.title, transaction_type)
+            last_record = get_last_record(currency, title, transaction_type)
             
             # Si no hay registros previos (last_update es None), crear nuevo registro
             if last_record.last_update is None:
-                self.save_cripto(price, last_record, currency, self.title, self.currency_type, transaction_type)
-                print(f"✅ Tasa de {self.title} guardada en la base de datos.")
+                self.save_cripto(price, last_record, currency, title, self.currency_type, transaction_type)
+                print(f"✅ Tasa de {title} guardada en la base de datos.")
             else:
                 # Si hay registros, comparar por fecha
                 if last_record.last_update.date() != datetime.now().date():
-                    self.save_cripto(price, last_record, currency, self.title, self.currency_type, transaction_type)
+                    self.save_cripto(price, last_record, currency, title, self.currency_type, transaction_type)
                     print("✅ Tasa de Binance P2P guardada en la base de datos.")
-                    self.logger.info(f"✅ Tasa guardada correctamente: {self.title}")
+                    self.logger.info(f"✅ Tasa guardada correctamente: {title}")
                 elif last_record.last_update.date() == datetime.now().date():
                     self.update_cripto(price, last_record)
                     print("✅ Tasa de Binance P2P actualizada en la base de datos.")

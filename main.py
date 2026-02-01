@@ -29,16 +29,26 @@ def main():
     xrp_price_sell = cripto.get_binance_p2p_price('SELL', 'XRP', 'VES')
     xrp_usd_price_buy = cripto.get_binance_p2p_price('BUY', 'XRP', 'USD')
     xrp_usd_price_sell = cripto.get_binance_p2p_price('SELL', 'XRP', 'USD')
-    logger.info(f"Precio USDT(compra): {usdt_price_buy}, Precio XRP(compra): {xrp_price_buy}")
-    logger.info(f"Precio USDT(venta): {usdt_price_sell}, Precio XRP(venta): {xrp_price_sell}")
-    logger.info(f"Precio USDT(compra): {xrp_usd_price_buy}, Precio XRP(compra): {xrp_price_buy}")
-    logger.info(f"Precio USDT(venta): {xrp_usd_price_sell}, Precio XRP(venta): {xrp_price_sell}")
+    paxg_usdt_price = cripto.get_spot_price('PAXGUSDT')
+    logger.info(f"Precio USDT(compra): {usdt_price_buy}, Precio USDT(compra): {xrp_price_buy}")
+    logger.info(f"Precio USDT(venta): {usdt_price_sell}, Precio USDT(venta): {xrp_price_sell}")
+    logger.info(f"Precio PAXG: {paxg_usdt_price}, Precio PAXG: {paxg_usdt_price}")
+    logger.info(f"Precio XRP(compra): {xrp_usd_price_buy}, Precio XRP(compra): {xrp_price_buy}")
+    logger.info(f"Precio XRP(venta): {xrp_usd_price_sell}, Precio XRP(venta): {xrp_price_sell}")
     
     # print(f"💰 Precio de USDT VES: {usdt_price}")
     # print(f"💰 Precio de XRP VES: {xrp_price}")
 
     # Guardar precio de USDT en la base de datos
     try:
+        if paxg_usdt_price:
+            paxg = CriptoService()
+            paxg.create_cripto(paxg_usdt_price, 'SPOT', 'USDT_PAXG', 'PAXG Gold')
+            print("✅ Tasa de PAXG(compra) procesada.")
+            logger.info("Tasa de PAXG procesada.")
+        elif paxg_usdt_price is None:
+            print("❌ No se pudo obtener la tasa de PAXG.")
+            logger.error("❌ No se pudo obtener la tasa de PAXG.")
         if usdt_price_buy:    
             save_binance_rate(usdt_price_buy, 'BUY')
             print("✅ Tasa de USDT(compra) procesada.")
