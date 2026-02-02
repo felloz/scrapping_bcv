@@ -37,7 +37,7 @@ class CriptoService:
                 elif last_record.last_update.date() == datetime.now().date():
                     self.update_cripto(price, last_record)
                     print("✅ Tasa de Binance P2P actualizada en la base de datos.")
-                    self.logger.info(f"✅ Tasa actualizada correctamente: {self.title}")
+                    self.logger.info(f"✅ Tasa actualizada correctamente: {title}")
         except Exception as e:
             print(f"❌ Error al guardar tasa de Binance P2P: {e}")
             self.logger.error(f"❌ Error al guardar tasa de Binance P2P: {e} create_cripto()")
@@ -63,34 +63,37 @@ class CriptoService:
                 symbol=set_symbol(data_db.price, price, data_db.symbol),
                 title=title
             )
-            print(f"✅ Tasa guardada para VES_USDT: {price} con fecha {datetime.now()}")
-            self.logger.info(f"✅ Tasa guardada para VES_USDT: {price} con fecha {datetime.now()}")
+            print(f"✅ Tasa guardada para {currency}: {price} con fecha {datetime.now()}")
+            self.logger.info(f"✅ Tasa guardada para {currency}: {price} con fecha {datetime.now()}")
         except Exception as e:
             print(f"❌ Error al guardar tasa de Binance P2P: {e} save_cripto()")
             self.logger.error(f"❌ Error al guardar tasa de Binance P2P: {e} save_cripto()")
             return None
 
-    def update_cripto(self, price, data_db: Monitor, currency = "VES_XRP"):
-
+    def update_cripto(self, price, data_db: Monitor, currency=None, title=None):
         try:
+            # Usar valores proporcionados o tomar del registro de la DB
+            currency = currency if currency else getattr(data_db, 'currency', 'VES_XRP')
+            title = title if title else getattr(data_db, 'title', self.title)
+
             Monitor.update(
-            change=change(price, data_db.price, data_db.change),
-            color=set_color(data_db.price, price, data_db.color),
-            last_update=datetime.now(),
-            last_update_old=data_db.last_update if data_db.last_update else parse_custom_date(get_current_date_custom()),
-            percent=percent_change(price, data_db.price, data_db.percent),
-            price=float(price),
-            price_old=data_db.price if data_db.price else 0.0,
-            symbol=set_symbol(data_db.price, price, data_db.symbol),
+                change=change(price, data_db.price, data_db.change),
+                color=set_color(data_db.price, price, data_db.color),
+                last_update=datetime.now(),
+                last_update_old=data_db.last_update if data_db.last_update else parse_custom_date(get_current_date_custom()),
+                percent=percent_change(price, data_db.price, data_db.percent),
+                price=float(price),
+                price_old=data_db.price if data_db.price else 0.0,
+                symbol=set_symbol(data_db.price, price, data_db.symbol),
             ).where(
-                (Monitor.currency == currency) & (Monitor.title == self.title)
-            
+                (Monitor.currency == currency) & (Monitor.title == title)
             ).where(Monitor.id == data_db.id).execute()
-            print(f"✅ Tasa actualizada para {self.title}: {price} con fecha {datetime.now()}")
-            self.logger.info(f"✅ Tasa actualizada para {self.title}: {price} con fecha {datetime.now()}")   
+
+            print(f"✅ Tasa actualizada para {title}: {price} con fecha {datetime.now()}")
+            self.logger.info(f"✅ Tasa actualizada para {title}: {price} con fecha {datetime.now()}")
         except Exception as e:
-            print(f"❌ Error al actualizar la tasa {self.title}: {price} con fecha {datetime.datetime.now()} - {e}")
-            self.logger.error((f"❌ Error al actualizar la tasa {self.title}: {price} con fecha {datetime.datetime.now()} - {e} update_cripto()"))
+            print(f"❌ Error al actualizar la tasa {title if 'title' in locals() else self.title}: {price} con fecha {datetime.now()} - {e}")
+            self.logger.error((f"❌ Error al actualizar la tasa {title if 'title' in locals() else self.title}: {price} con fecha {datetime.now()} - {e} update_cripto()"))
 
     def delete_cripto(self, cript_id):
         return self.cript_repository.delete(cript_id)
